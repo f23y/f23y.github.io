@@ -97,7 +97,9 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>本来发在团队公众号上的，结果由于特殊原因不得不撤掉，就发在博客上吧，挺久了。。</p>
+        <span id="more"></span>
+
+<p>本来发在团队公众号上的，结果由于特殊原因不得不撤掉，就发在博客上吧，挺久了。。</p>
 <h2 id="0x01-漏洞描述"><a href="#0x01-漏洞描述" class="headerlink" title="0x01 漏洞描述"></a>0x01 漏洞描述</h2><p>​        该漏洞是由于Windows对多个系统文件（包括安全账户管理器(SAM)）的访问控制列表（ACL）过于宽松所导致的特权提升漏洞。成功利用此漏洞的攻击者可以将普通用户权限提升至SYSTEM权限，并在目标机器上执行任意代码，从而达到控制目标系统的目的。该漏洞存在一定的前置利用条件，需要目标系统开启系统保护，并设置了系统还原点才可进行攻击。如果Win10 C盘大于128G保护模式会默认开启，并进行还原点备份，exp会从这个备份的卷影dump sam文件从而进行利用。</p>
 <p>风险等级：</p>
 <img src="https://pic.imgdb.cn/item/60fdeae15132923bf8f4ebfe.png" alt="1" style="zoom:80%;" />
@@ -204,7 +206,9 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h2 id="Preface"><a href="#Preface" class="headerlink" title="Preface"></a>Preface</h2><p>Recently, I’ve started to learn browser fuzzing and this is where I keep basic browser stuff. I will keep updating if I’ve learned something new. My goal here is to get familiar with browser programming model. Hopefully I can begin to learn how to fuzz browsers as soon as possible.</p>
+        <span id="more"></span>
+
+<h2 id="Preface"><a href="#Preface" class="headerlink" title="Preface"></a>Preface</h2><p>Recently, I’ve started to learn browser fuzzing and this is where I keep basic browser stuff. I will keep updating if I’ve learned something new. My goal here is to get familiar with browser programming model. Hopefully I can begin to learn how to fuzz browsers as soon as possible.</p>
 <h2 id="Chrome-University-Notes"><a href="#Chrome-University-Notes" class="headerlink" title="Chrome University Notes"></a>Chrome University Notes</h2><p>To have an overall understanding of the browser, I’ve decided to take a look at of <a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLNYkxOF6rcICgS7eFJrGDhMBwWtdTgzpx">Chrome University</a> </p>
 <h3 id="The-history-of-the-web"><a href="#The-history-of-the-web" class="headerlink" title="The history of the web"></a>The history of the web</h3><p>This video is mainly about the speaker’s work experience. It’s better to watch the video because the speaker’s humor makes the chapter more accessible.</p>
 <p><strong>Mosaic–&gt;IE–&gt;Chrome</strong></p>
@@ -214,7 +218,7 @@
 <p>​        <strong>Plugin</strong>: NPAPI(Netscape Plugin Application Programming Interface).</p>
 <p>​        <strong>Renderer</strong>(sandboxed): Webkit.</p>
 <p>​        (They talked to each other through IPC.)</p>
-<p><strong>IPC</strong>: (inter-process communication, message passing/shared memory, between processes of different privileges).</p>
+<p><strong>IPC</strong>: inter-process communication, message passing/shared memory, between processes of different privileges.</p>
 <p><strong>Sandboxing</strong>(platform-specific, multi-level): untrusted data–&gt;locked-down process.</p>
 <p><strong>Plugin Process</strong>: work with existing plugins, ran Flash/Java/reader, unsandboxed.</p>
 <p><strong>Browser Process</strong>: central coordinator, owns browser state(profile data, settings), draws UI, handles networking, can’t trust renderer.</p>
@@ -241,6 +245,16 @@
 <p>Servicification Process Model: All the processes are sandboxed except Browser.(partial sandboxed: Devices and GPU)</p>
 <h3 id="Anatomy-of-the-browser-201"><a href="#Anatomy-of-the-browser-201" class="headerlink" title="Anatomy of the browser 201"></a>Anatomy of the browser 201</h3><p>The Browser Process</p>
 <p>//chrome–&gt;//content</p>
+<p>a browser process: Utility rprocesses, GPU processes, Renderers… </p>
+<p>major objects: BrowserProcess, content::BrowserMainLoop, content::BrowserMainParts, ChromeBrowserMainParts</p>
+<p>OffTheRecordProfile–&gt;Profile–&gt;content::BrowserContext–&gt;base::SupportsUserData::Data &amp; KeyedService&lt;–BrowserContextKeyedServiceFactory</p>
+<p>WebContentsObserver–&gt;WebContents–&gt;(owns)WebContentsUserData</p>
+<p>WebContents–&gt;(calls)WebContentsDelegate&lt;–(implements)Browser</p>
+<p>RenderFrameHost(Browser, Content)–&gt;RenderFrame(Renderer, Content)–&gt;WebLocalFrame(Blink)–&gt;LocalFrame(Blink)</p>
+<p>multiple renderer processes</p>
+<p>Profile: History, Bookmarks, Passwords</p>
+<p>​              Default Storage Partition: Cookies, Local Storage, IndexedDB</p>
+<p>​              Other Storage Partitions: Cookies, Local Storage, IndexedDB</p>
 <p>to be continued…</p>
 
       
