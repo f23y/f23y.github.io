@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>page | f23y&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="小白学污点分析（标题里的小白指我自己） 0x00 前言​        污点分析（Taint Analysis）技术是信息流分析技术的一种实践方法，在信息泄露检测、漏洞探测、逆向工程等方面有广泛的应用并被移植到各种不同的环境和平台当中。污点分析技术将系统或应用程序中的数据标记为污点或非污点，当污点数据根据信息流传播策略可影响到非污点数据时，则将该非污点数据的标记修改为污点，当污点标签最终随数据传播">
+<meta property="og:type" content="article">
+<meta property="og:title" content="page">
+<meta property="og:url" content="https://f23y.github.io/2022/01/18/%E5%B0%8F%E7%99%BD%E5%AD%A6%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="f23y&#39;s blog">
+<meta property="og:description" content="小白学污点分析（标题里的小白指我自己） 0x00 前言​        污点分析（Taint Analysis）技术是信息流分析技术的一种实践方法，在信息泄露检测、漏洞探测、逆向工程等方面有广泛的应用并被移植到各种不同的环境和平台当中。污点分析技术将系统或应用程序中的数据标记为污点或非污点，当污点数据根据信息流传播策略可影响到非污点数据时，则将该非污点数据的标记修改为污点，当污点标签最终随数据传播">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e598dc2ab3f51d91737d16.png">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e599392ab3f51d9173c657.png">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e5ab9e2ab3f51d91810c6b.png">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e5c0a52ab3f51d918c0127.png">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e59a5f2ab3f51d9174a4d6.jpg">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e59b232ab3f51d91753399.png">
+<meta property="og:image" content="https://pic.imgdb.cn/item/61e59b3b2ab3f51d917547b1.png">
+<meta property="article:published_time" content="2022-01-17T20:03:09.000Z">
+<meta property="article:modified_time" content="2022-01-17T20:04:08.411Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="taint analyzer">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic.imgdb.cn/item/61e598dc2ab3f51d91737d16.png">
+  
+    <link rel="alternate" href="/atom.xml" title="f23y's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">f23y&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://f23y.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-小白学污点分析" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/01/18/%E5%B0%8F%E7%99%BD%E5%AD%A6%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90/" class="article-date">
+  <time class="dt-published" datetime="2022-01-17T20:03:09.000Z" itemprop="datePublished">2022-01-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/concepts/">concepts</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      page
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="小白学污点分析"><a href="#小白学污点分析" class="headerlink" title="小白学污点分析"></a>小白学污点分析</h1><p>（标题里的小白指我自己）</p>
+<h2 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h2><p>​        <strong>污点分析</strong>（Taint Analysis）技术是<strong>信息流</strong>分析技术的一种实践方法，在信息泄露检测、漏洞探测、逆向工程等方面有广泛的应用并被移植到各种不同的环境和平台当中。污点分析技术将系统或应用程序中的数据标记为污点或非污点，当污点数据根据信息流传播策略可影响到非污点数据时，则将该非污点数据的标记修改为污点，当污点标签最终随数据传播到指定的存储区域或者信息泄露点时，则认定该系统违反了信息流策略。根据污点分析目标软件是否运行， 通常可将其分为静态污点分析（Static Taint Analysis，STA）与动态污点分析（Dynamic Taint Analysis，DTA）。根据目标程序分析粒度不同，污点分析技术可分为粗粒度污点分析(Coarse-grained Taint Analysis)和细粒度污点分析(Fine-grained Taint Analysis)。</p>
+<span id="more"></span>
+
+<img src="https://pic.imgdb.cn/item/61e598dc2ab3f51d91737d16.png" style="zoom: 50%;" />
+
+<h2 id="0x01-污点分析原理"><a href="#0x01-污点分析原理" class="headerlink" title="0x01 污点分析原理"></a>0x01 污点分析原理</h2><p>​        污点分析技术模型包括<strong>污点源</strong>、<strong>污点汇聚点</strong>和<strong>无害化处理</strong>等部分。</p>
+<p>​        污点源（source）：污点信息在程序中的产生点，即直接引入不受信任的数据或者机密数据到系统中。</p>
+<p>​        污点汇聚点（sink）：系统将污点数据输出到敏感数据区或者外界，造成敏感数据区被非法改写或者隐私数据泄露。其中敏感操作可归 纳为以下四种：(1) 内存分配函数； (2) 数组访问指令； (3) 循环控制； (4)  危险函数， 如 strcpy／printf／fprintf 等。 </p>
+<p>​        无害化处理（sanitizer）：通过数据加密或重新赋值等操作使数据传播不再对系统的完整性和保密性产生危害。</p>
+<p>​        污点分析的处理过程可以分成 3 个阶段：(1) 识别污点源和汇聚点 (2) 污点传播分析 (3) 无害处理。</p>
+<img src="https://pic.imgdb.cn/item/61e599392ab3f51d9173c657.png" style="zoom: 67%;" />
+
+<p>​        污点数据主要通过数据间的依赖关系在系统或应用程序中进行传播，这种依赖关系又分为数据依赖和控制依赖。数据依赖主要包括程序中各变量间的直接赋值、数学计算等操作，控制依赖主要包括程序中各变量间的条件判断与指令跳转等情况。</p>
+<p><img src="https://pic.imgdb.cn/item/61e5ab9e2ab3f51d91810c6b.png" alt="5.5_overview"></p>
+<h2 id="0x02-静态污点分析"><a href="#0x02-静态污点分析" class="headerlink" title="0x02 静态污点分析"></a>0x02 静态污点分析</h2><p>​        静态污点分析是指在不运行且不修改代码的前提下离线分析变量间数据和控制依赖关系，以检测污点数据能否从污点源传播到污点汇聚点。静态污点分析的对象是程序代码或中间表示（Intermediate Representation, IR）。静态污点分析的优点是代码覆盖率高， 缺点是不能获取程序真实的执行过程， 分析复杂且漏报率较高。可以学习LLVM IR并完成<a target="_blank" rel="noopener" href="https://github.com/UofT-EcoSystem/CSCD70">CSCD70</a> 。</p>
+<img src="https://pic.imgdb.cn/item/61e5c0a52ab3f51d918c0127.png" alt="LLVMIR" style="zoom: 80%;" />
+
+<h2 id="0x03-动态污点分析"><a href="#0x03-动态污点分析" class="headerlink" title="0x03 动态污点分析"></a>0x03 动态污点分析</h2><p>​        动态污点分析是在目标程序运行过程中通过实时跟踪监控并记录程序变量、寄存器和内存等的值，确定污点数据能否从污点源传播到污点汇聚点。动态污点分析的主要过程由三个阶段组成：</p>
+<p>1） 污点标记（污染源识别）：将 source 点的输入数据标记为污点源数据，包括来自网络、文件及外部设备输入的外部数据。一般采用影子内存技术对污点数据进行标记，如果某寄存器或内存中存放的是污点数据，则影子内存将会生成一个污点数据结构的指针与该污点数据一一对应， 该污点数据结构保存的是与该污点相关信息，否则影子内存为空。为了跟踪污点数据的显示传播，需要在每个数据移动指令和算数指令执行前监控，当指令的结果被其中一个操作数污染后，把结果数据对应的影子内存设置为一个指针，指向源污染点操作数指向的数据结构。</p>
+<img src="https://pic.imgdb.cn/item/61e59a5f2ab3f51d9174a4d6.jpg" style="zoom:50%;" />
+
+<p>2） 污点传播 （动态跟踪）：在程序执行过程中跟踪污点数据的传播过程， 如果某个污点数据被复制到其他缓冲区， 或进行了一些运算， 将会导致其他内存数据变成不可信数据， 则将其标记为“被污染” （tainted）数据。动态污点跟踪通常基于三种机制：动态代码插桩（e.g. DynamoRio, Pin, Valgrind）、全系统模拟、虚拟机监视器。二进制代码级的污点分析有两种粒度，一是直接分析 x86 等指令集（效率更高），二 是中间语言（IR）。</p>
+<img src="https://pic.imgdb.cn/item/61e59b232ab3f51d91753399.png" style="zoom:80%;" />
+
+<p>3） 攻击检测（策略及规则） ：检查程序中是否有非法使用污点数据的情况，常见的包括检测跳转地址攻击、格式化字符串攻击及缓冲区溢出攻击等，若检测到非法使用，则终止程序继续运行并报告潜在的攻击漏洞。</p>
+<img src="https://pic.imgdb.cn/item/61e59b3b2ab3f51d917547b1.png" style="zoom:80%;" />
+
+<h2 id="0x04-Clang-Static-Analyzer"><a href="#0x04-Clang-Static-Analyzer" class="headerlink" title="0x04  Clang Static Analyzer"></a>0x04  Clang Static Analyzer</h2><p>源码：<a target="_blank" rel="noopener" href="https://code.woboq.org/llvm/clang/">https://code.woboq.org/llvm/clang/</a></p>
+<p>文档：<a target="_blank" rel="noopener" href="https://clang.llvm.org/docs/ClangStaticAnalyzer.html">https://clang.llvm.org/docs/ClangStaticAnalyzer.html</a></p>
+<p>Clang AST: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=VqCkCDFLSsc">https://www.youtube.com/watch?v=VqCkCDFLSsc</a></p>
+<p>架构：Parser, ExprEngine, StateManager, ConstraintManager, StoreManager……（懒得画图）</p>
+<p>可以尝试编写一些检查器。参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/369254889">https://zhuanlan.zhihu.com/p/369254889</a></p>
+<p>也可以查看<a target="_blank" rel="noopener" href="https://github.com/llvm/llvm-project/blob/e356027016c6365b3d8924f54c33e2c63d931492/clang/test/Analysis/Inputs/taint-generic-config.yaml">taint-generic-config</a>进一步思考。</p>
+<p>困死了。。睡觉zzz</p>
+<h2 id="0x05-参考链接"><a href="#0x05-参考链接" class="headerlink" title="0x05 参考链接"></a>0x05 参考链接</h2><p><a target="_blank" rel="noopener" href="https://www.k0rz3n.com/2019/03/01/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF/">https://www.k0rz3n.com/2019/03/01/%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90%E6%8A%80%E6%9C%AF/</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.bookstack.cn/read/CTF-All-In-One/doc-5.5_taint_analysis.md#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90">https://www.bookstack.cn/read/CTF-All-In-One/doc-5.5_taint_analysis.md#%E5%8A%A8%E6%80%81%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90</a></p>
+<p><a target="_blank" rel="noopener" href="https://hexterisk.github.io/blog/posts/2020/05/03/taint-analysis/">https://hexterisk.github.io/blog/posts/2020/05/03/taint-analysis/</a></p>
+<p><a target="_blank" rel="noopener" href="https://hexterisk.github.io/blog/posts/2020/06/03/dynamic-binary-instrumentation-and-pin/">https://hexterisk.github.io/blog/posts/2020/06/03/dynamic-binary-instrumentation-and-pin/</a></p>
+<p><a target="_blank" rel="noopener" href="https://xueshu.baidu.com/usercenter/paper/show?paperid=1b0f00d0aw7g0tr0by4w0gn0cs524325&amp;site=xueshu_se">https://xueshu.baidu.com/usercenter/paper/show?paperid=1b0f00d0aw7g0tr0by4w0gn0cs524325&amp;site=xueshu_se</a></p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/7979">https://xz.aliyun.com/t/7979</a></p>
+<p><a target="_blank" rel="noopener" href="https://xueshu.baidu.com/usercenter/paper/show?paperid=2e4f5bd4cac517e72fd7fc80c74b047a&amp;site=xueshu_se">https://xueshu.baidu.com/usercenter/paper/show?paperid=2e4f5bd4cac517e72fd7fc80c74b047a&amp;site=xueshu_se</a></p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2007.05955.pdf">https://arxiv.org/pdf/2007.05955.pdf</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://f23y.github.io/2022/01/18/%E5%B0%8F%E7%99%BD%E5%AD%A6%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90/" data-id="ckyj48wdx0000igu06bfqhowc" data-title="page" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/taint-analyzer/" rel="tag">taint analyzer</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/12/19/Windows%E6%8F%90%E6%9D%83%E6%BC%8F%E6%B4%9E%EF%BC%9ACVE-2021-36934(HiveNightmare)%E5%A4%8D%E7%8E%B0%E4%B8%8E%E5%88%86%E6%9E%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Windows提权漏洞：CVE-2021-36934(HiveNightmare)复现与分析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CVEs/">CVEs</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/chrome/">chrome</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/concepts/">concepts</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HiveNightmare/" rel="tag">HiveNightmare</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SAM/" rel="tag">SAM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/" rel="tag">Windows</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/basics/" rel="tag">basics</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/taint-analyzer/" rel="tag">taint analyzer</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/HiveNightmare/" style="font-size: 10px;">HiveNightmare</a> <a href="/tags/SAM/" style="font-size: 10px;">SAM</a> <a href="/tags/Windows/" style="font-size: 10px;">Windows</a> <a href="/tags/basics/" style="font-size: 10px;">basics</a> <a href="/tags/taint-analyzer/" style="font-size: 10px;">taint analyzer</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/01/">January 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">December 2021</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/01/18/%E5%B0%8F%E7%99%BD%E5%AD%A6%E6%B1%A1%E7%82%B9%E5%88%86%E6%9E%90/">page</a>
+          </li>
+        
+          <li>
+            <a href="/2021/12/19/Windows%E6%8F%90%E6%9D%83%E6%BC%8F%E6%B4%9E%EF%BC%9ACVE-2021-36934(HiveNightmare)%E5%A4%8D%E7%8E%B0%E4%B8%8E%E5%88%86%E6%9E%90/">Windows提权漏洞：CVE-2021-36934(HiveNightmare)复现与分析</a>
+          </li>
+        
+          <li>
+            <a href="/2021/12/19/Browser%20Basics/">Browser Basics</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
